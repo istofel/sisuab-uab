@@ -54,11 +54,12 @@ def main() -> None:
         st.caption(texts.CONFIG_KEY.format(key=exc.key))
         st.stop()
 
-    header = st.columns([1, 6, 1], vertical_alignment="center")
-    header[0].image(BANNER_DIR / "sisuab-transparent.png", width=110)
-    header[1].title(texts.PAGE_TITLE)
-    header[1].caption(texts.PAGE_CAPTION)
-    header[2].image(BANNER_DIR / "capes-transparent.png", width=96)
+    header = st.columns([7, 3], vertical_alignment="center")
+    header[0].title(texts.PAGE_TITLE)
+    header[0].caption(texts.PAGE_CAPTION)
+    logos = header[1].columns(2, gap="small", vertical_alignment="center")
+    logos[0].image(BANNER_DIR / "sisuab-transparent.png", width=105)
+    logos[1].image(BANNER_DIR / "capes.jpg", width=105)
     sidebar.render(settings, ref, client)
     if not state.can_enter_step(ref, st.session_state["step"]):
         for previous in (3, 2, 1):
