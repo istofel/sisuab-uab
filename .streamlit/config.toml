@@ -1,0 +1,35 @@
+[global]
+developmentMode = false
+
+[server]
+address = "127.0.0.1"
+port = 8501
+headless = true
+maxUploadSize = 50
+fileWatcherType = "none"
+runOnSave = false
+enableStaticServing = false
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+
+[client]
+showErrorDetails = "none"
+showErrorLinks = false
+toolbarMode = "minimal"
+
+[runner]
+magicEnabled = false
+
+[theme]
+base = "light"
+primaryColor = "#1B7F3B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F4F3"
+textColor = "#1F2933"
+redColor = "#B42318"
+orangeColor = "#B54708"
+greenColor = "#067647"
+font = "sans-serif"
+codeFont = "monospace"

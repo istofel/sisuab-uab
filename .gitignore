@@ -1,0 +1,13 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+logs/
+uploads/
+saidas/
+docs/novo_modelo_arquivo.pdf
