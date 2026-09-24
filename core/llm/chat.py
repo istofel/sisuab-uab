@@ -30,7 +30,10 @@ from core.validate.fields import (
 )
 
 ROW_REFERENCE_RE = re.compile(r"\b(?:linha|registro)\s+([0-9]+)\b")
-CORRECTION_RE = re.compile(r"\b(?:corrija|corrigir|altere|alterar|troque|trocar|substitua)\b")
+CORRECTION_RE = re.compile(
+    r"\b(?:corrija|corrigir|altere|alterar|troque|trocar|substitua|"
+    r"mude|mudar|atualize|atualizar|coloque|colocar|defina|definir)\b"
+)
 EXPLANATION_RE = re.compile(r"\b(?:explique|explicar|entender)\b")
 TARGET_RE = re.compile(r"\bpara\b\s*:?[ \t]*(.+)$", re.IGNORECASE | re.DOTALL)
 FIELD_PATTERNS = {
@@ -73,25 +76,67 @@ class ProposedPatch:
     reason: str | None
 
 
+def _context_cell(value: str) -> str:
+    """Mantém cada registro em uma linha sem confundir o separador de campos."""
+    return value.replace("\\", "\\\\").replace("|", "\\|").replace("\r", "\\r").replace("\n", "\\n")
+
+
 def build_context(
-    records: list[Record], result: ValidationResult, only_problem_first: bool = True
+    records: list[Record],
+    result: ValidationResult,
+    only_problem_first: bool = True,
+    focus_ids: set[int] | None = None,
 ) -> tuple[str, bool]:
     """Lista até 150 registros, priorizando os com problema em cargas grandes."""
     active = [record for record in records if not record.deleted]
-    if len(active) > CHAT_MAX_RECORDS_IN_CONTEXT and only_problem_first:
+    focused = [record for record in active if focus_ids and record.id in focus_ids]
+    if focused:
+        selected = focused
+    elif len(active) > CHAT_MAX_RECORDS_IN_CONTEXT and only_problem_first:
         selected = [record for record in active if result.by_record.get(record.id)]
     else:
         selected = active
-    truncated = len(selected) > CHAT_MAX_RECORDS_IN_CONTEXT or len(selected) < len(active)
+    truncated = len(selected) > CHAT_MAX_RECORDS_IN_CONTEXT or (
+        not focused and len(selected) < len(active)
+    )
     selected = selected[:CHAT_MAX_RECORDS_IN_CONTEXT]
     lines: list[str] = []
     for record in selected:
         values = result.effective.get(record.id, record.input)
-        issue_codes = ",".join(issue.code for issue in result.by_record.get(record.id, []))
-        lines.append(
-            "|".join([str(record.id), *(values.get(field, "") for field in FIELDS), issue_codes])
-        )
+        issues = result.by_record.get(record.id, [])
+        if focus_ids and record.id in focus_ids:
+            issue_codes = "; ".join(f"{issue.code}: {issue.message}" for issue in issues)
+        else:
+            issue_codes = ",".join(issue.code for issue in issues)
+        cells = [str(record.id), record.name_ref]
+        cells.extend(values.get(field, "") for field in FIELDS)
+        cells.append(issue_codes)
+        lines.append("|".join(_context_cell(cell) for cell in cells))
     return "\n".join(lines), truncated
+
+
+def _named_matches(message: str, records: list[Record]) -> list[Record]:
+    """Localiza nomes completos ou prenomes, preferindo a referência mais específica."""
+    normalized = search_key(message)
+    target_marker = re.search(r"\bpara\b", normalized)
+    if target_marker is not None:
+        normalized = normalized[: target_marker.start()]
+    matches: list[tuple[bool, Record]] = []
+    for record in records:
+        if record.deleted or not record.name_ref.strip():
+            continue
+        name = search_key(record.name_ref)
+        first = name.split()[0]
+        if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", normalized):
+            matches.append((True, record))
+        elif len(first) >= 3 and re.search(rf"(?<!\w){re.escape(first)}(?!\w)", normalized):
+            matches.append((False, record))
+    full_first_names = {search_key(record.name_ref).split()[0] for full, record in matches if full}
+    return [
+        record
+        for full, record in matches
+        if full or search_key(record.name_ref).split()[0] not in full_first_names
+    ]
 
 
 def _candidate_error(field: str, normalized: Normalized, ref: Reference | None) -> str | None:
@@ -119,11 +164,26 @@ def _local_request(
 ) -> tuple[str, list[ProposedPatch]] | None:
     """Resolve pedidos inequívocos sem depender da interpretação do modelo."""
     normalized_message = search_key(message)
-    row_match = ROW_REFERENCE_RE.search(normalized_message)
-    if row_match is None:
+    row_matches = ROW_REFERENCE_RE.findall(normalized_message)
+    if len(row_matches) > 1:
         return None
-    record_id = int(row_match.group(1))
-    record = next((item for item in records if item.id == record_id and not item.deleted), None)
+    if row_matches:
+        record_id = int(row_matches[0])
+        record = next((item for item in records if item.id == record_id and not item.deleted), None)
+        named = _named_matches(message, records)
+        if named and record is not None and record not in named:
+            return chat_msg("ALVO_CONFLITANTE"), []
+    else:
+        matches = _named_matches(message, records)
+        if (
+            len(matches) > 1
+            and len({search_key(item.name_ref).split()[0] for item in matches}) == 1
+        ):
+            return chat_msg("NOME_AMBIGUO"), []
+        if len(matches) != 1:
+            return None
+        record = matches[0]
+        record_id = record.id
     if CORRECTION_RE.search(normalized_message):
         fields = [
             field for field, pattern in FIELD_PATTERNS.items() if pattern.search(normalized_message)
@@ -134,7 +194,13 @@ def _local_request(
             if field in {"polo", "ddd"} and ref is None:
                 return None
             raw_value = TARGET_LABEL_RE.sub("", target_match.group(1).strip(), count=1)
-            raw_value = raw_value.strip().strip("\"'").strip()
+            raw_value = re.sub(
+                r"\s*(?:[,;]\s*)?(?:por favor|obrigad[oa])\s*[.!?]*$",
+                "",
+                raw_value,
+                flags=re.IGNORECASE,
+            )
+            raw_value = raw_value.strip().strip("\"' ").strip(".!?; ")
             if not raw_value:
                 return None
             if record is None:
@@ -170,14 +236,32 @@ def ask(
     ref: Reference | None = None,
 ) -> tuple[str, list[ProposedPatch], bool]:
     """Solicita propostas e descarta mudanças fora dos registros válidos."""
-    context, truncated = build_context(records, result)
+    row_ids = {int(match) for match in ROW_REFERENCE_RE.findall(search_key(message))}
+    focus_ids = row_ids | {record.id for record in _named_matches(message, records)}
+    if not focus_ids:
+        for turn in reversed(history[-CHAT_HISTORY_TURNS:]):
+            if turn.role == "user":
+                previous_rows = {
+                    int(match) for match in ROW_REFERENCE_RE.findall(search_key(turn.content))
+                }
+                focus_ids = previous_rows | {
+                    record.id for record in _named_matches(turn.content, records)
+                }
+                if focus_ids:
+                    break
+    context, truncated = build_context(records, result, focus_ids=focus_ids)
     local = _local_request(message, records, result, ref)
     if local is not None:
         return *local, truncated
     turns = "\n".join(f"{turn.role}: {turn.content}" for turn in history[-CHAT_HISTORY_TURNS:])
-    user = f"<dados>\n{context}\n</dados>\nConversa:\n{turns}\nPedido: {message}"
+    user = (
+        "Colunas dos dados: registro|nome|polo|cpf|situacao|email|ddd|telefone|publico_alvo|erros. "
+        "O nome identifica o aluno; registro é o número usado nas alterações.\n"
+        f"<dados>\n{context}\n</dados>\nConversa:\n{turns}\nPedido: {message}"
+    )
     output = client.chat_structured(model, CHAT_SYSTEM, user, ChatOut)
     by_id = {record.id: record for record in records}
+    context_ids = {int(line.split("|", 1)[0]) for line in context.splitlines()}
     proposals: dict[tuple[int, str], ProposedPatch] = {}
     for change in output.alteracoes:
         record = by_id.get(change.registro)
@@ -186,12 +270,17 @@ def ask(
             reason = "REGISTRO_INEXISTENTE"
         elif record.deleted:
             reason = "REGISTRO_EXCLUIDO"
+        elif change.registro not in context_ids:
+            reason = "REGISTRO_FORA_CONTEXTO"
         elif len(change.valor_novo) > CHAT_MAX_VALUE_LEN:
             reason = "VALOR_MUITO_LONGO"
+        normalized = normalize({change.campo: change.valor_novo})
+        if reason is None and _candidate_error(change.campo, normalized, ref) is not None:
+            reason = "VALOR_INVALIDO"
         proposals[(change.registro, change.campo)] = ProposedPatch(
             change.registro,
             change.campo,
-            change.valor_novo,
+            normalized.values[change.campo],
             record.input.get(change.campo, "") if record else "",
             reason is None,
             reason,

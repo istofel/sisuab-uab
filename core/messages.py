@@ -136,6 +136,12 @@ CHAT_CATALOG: dict[str, str] = {
         "Nenhuma alteração foi proposta."
     ),
     "REGISTRO_INEXISTENTE": "O registro {registro} não foi encontrado nesta carga.",
+    "NOME_AMBIGUO": (
+        "Há mais de um aluno com esse nome. Informe o nome completo ou o número do registro."
+    ),
+    "ALVO_CONFLITANTE": (
+        "O nome e o número do registro indicam alunos diferentes. Confira o pedido."
+    ),
     "ERROS_REGISTRO": "Registro {registro}: {detalhes}",
     "SEM_ERROS_REGISTRO": "Não há erro pendente no registro {registro}.",
 }

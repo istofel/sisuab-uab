@@ -120,7 +120,9 @@ CHAT_INVALID = "Proposta descartada: {reason}"
 CHAT_REASONS = {
     "REGISTRO_INEXISTENTE": "registro inexistente",
     "REGISTRO_EXCLUIDO": "registro excluído",
+    "REGISTRO_FORA_CONTEXTO": "registro fora do pedido",
     "VALOR_MUITO_LONGO": "valor longo demais",
+    "VALOR_INVALIDO": "o valor não passou na validação do campo",
 }
 DOWNLOAD_TITLE = "Conferir e baixar CSV"
 DOWNLOAD_EMPTY = "Nenhum registro confirmado para exportar."
