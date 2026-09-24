@@ -10,4 +10,12 @@ htmlcov/
 logs/
 uploads/
 saidas/
-docs/novo_modelo_arquivo.pdf
+docs/
+tests/
+tools/
+.github/
+AGENTS.md
+CLAUDE.md
+Como usar.md
+pyproject.toml
+requirements-dev.txt
