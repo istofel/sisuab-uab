@@ -1,6 +1,6 @@
 """Constantes do leiaute e limites do Importador SisUAB."""
 
-APP_NAME = "Importador SisUAB"
+APP_NAME = "Importador SisUAB com IA"
 
 FIELDS: tuple[str, ...] = ("polo", "cpf", "situacao", "email", "ddd", "telefone", "publico_alvo")
 FIELD_LABELS = {

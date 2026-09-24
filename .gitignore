@@ -10,7 +10,8 @@ htmlcov/
 logs/
 uploads/
 saidas/
-docs/
+docs/*
+!docs/banner/
 tests/
 tools/
 .github/

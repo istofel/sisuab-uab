@@ -9,6 +9,7 @@ COPY --chown=app:app app.py ./
 COPY --chown=app:app core ./core
 COPY --chown=app:app ui ./ui
 COPY --chown=app:app config ./config
+COPY --chown=app:app docs/banner ./docs/banner
 COPY --chown=app:app .streamlit ./.streamlit
 RUN mkdir -p /app/logs && chown app:app /app/logs
 USER app

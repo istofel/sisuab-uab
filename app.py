@@ -12,6 +12,8 @@ from core.reference import load_reference
 from core.settings import load_settings
 from ui import sidebar, state, step_download, step_fix, step_review, step_upload, texts
 
+BANNER_DIR = Path(__file__).resolve().parent / "docs" / "banner"
+
 st.set_page_config(page_title=APP_NAME, layout="wide")
 
 
@@ -52,8 +54,11 @@ def main() -> None:
         st.caption(texts.CONFIG_KEY.format(key=exc.key))
         st.stop()
 
-    st.title(texts.PAGE_TITLE)
-    st.caption(texts.PAGE_CAPTION)
+    header = st.columns([1, 6, 1], vertical_alignment="center")
+    header[0].image(BANNER_DIR / "sisuab-transparent.png", width=110)
+    header[1].title(texts.PAGE_TITLE)
+    header[1].caption(texts.PAGE_CAPTION)
+    header[2].image(BANNER_DIR / "capes-transparent.png", width=96)
     sidebar.render(settings, ref, client)
     if not state.can_enter_step(ref, st.session_state["step"]):
         for previous in (3, 2, 1):

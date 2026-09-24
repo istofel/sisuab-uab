@@ -1,4 +1,10 @@
-# Importador SisUAB
+<p align="center">
+    <img src="docs/banner/sisuab_capes.png" width="900px">
+</p>
+
+<hr/>
+
+# Importador SisUAB com IA
 
 Aplicação local para conferir matrículas UAB e gerar o CSV de importação do SisUAB2. Os dados dos alunos ficam na memória da sessão. A IA é opcional para planilhas e necessária para extrair dados de texto livre; ela usa somente um Ollama local.
 

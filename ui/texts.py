@@ -1,6 +1,6 @@
 """Rótulos e mensagens exibidos na interface."""
 
-PAGE_TITLE = "Importador SisUAB"
+PAGE_TITLE = "Importador SisUAB com IA"
 PAGE_CAPTION = "Da planilha ao CSV do SisUAB, com dados só neste computador."
 STEPS = ("1. Enviar", "2. Conferir", "3. Corrigir", "4. Baixar")
 STEP_UNAVAILABLE = "Esta etapa será exibida quando os arquivos forem carregados."
