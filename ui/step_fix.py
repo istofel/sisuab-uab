@@ -6,7 +6,9 @@ import streamlit as st
 from core.constants import FIELDS
 from core.llm.client import OllamaClient
 from core.models import PatchOrigin, Severity
+from core.normalize import normalize
 from core.reference import Reference
+from core.text_utils import ascii_digits
 from ui import chat_panel, state, suggestions_panel, texts
 
 FIELD_TO_LABEL = {field: texts.FIELD_OPTIONS[field] for field in FIELDS}
@@ -23,6 +25,15 @@ def _on_editor_change(ref: Reference, editor_key: str, visible_ids: list[int]) -
         if index >= len(visible_ids):
             continue
         record = by_id[visible_ids[index]]
+        if any(LABEL_TO_FIELD.get(label) in {"ddd", "telefone"} for label in columns):
+            normalized = normalize(record.input)
+            if normalized.ddd_from_phone and not normalized.ddd_conflict:
+                # A edição conserva o outro campo que a tabela já mostrava separado.
+                for field in ("ddd", "telefone"):
+                    patch = st.session_state["patchlog"].set_value(
+                        record, field, normalized.values[field], PatchOrigin.EDICAO, group
+                    )
+                    changed = changed or patch is not None
         for label, value in columns.items():
             if label == texts.FIX_DELETE_COLUMN:
                 if value:
@@ -86,17 +97,27 @@ def _editor_rows(ref: Reference, visible_ids: list[int]) -> list[dict]:
         issues = result.by_record.get(record_id, [])
         if any(issue.severity == Severity.ERRO for issue in issues):
             status = texts.FIX_STATUS_ERROR
-        elif issues:
+        elif any(issue.severity == Severity.AVISO for issue in issues):
             status = texts.FIX_STATUS_WARNING
         else:
             status = texts.FIX_STATUS_OK
+        displayed = record.input.copy()
+        for field in ("ddd", "telefone", "situacao", "publico_alvo"):
+            displayed[field] = result.effective[record_id][field]
+        if any(issue.code == "DDD_CONFLITO" for issue in issues):
+            displayed["telefone"] = ascii_digits(record.input.get("telefone", ""))
         row = {
             texts.FIX_NUMBER: record.id,
             texts.FIX_ORIGIN: f"{record.source_name}, {record.locator}",
             texts.FIX_NAME: record.name_ref,
-            **{FIELD_TO_LABEL[field]: record.input.get(field, "") for field in FIELDS},
+            **{FIELD_TO_LABEL[field]: displayed.get(field, "") for field in FIELDS},
             texts.FIX_STATE: status,
-            texts.FIX_ISSUES: " · ".join(issue.message for issue in issues),
+            texts.FIX_ISSUES: " · ".join(
+                issue.message for issue in issues if issue.severity != Severity.INFO
+            ),
+            texts.FIX_INFORMATION: " · ".join(
+                issue.message for issue in issues if issue.severity == Severity.INFO
+            ),
             texts.FIX_DELETE_COLUMN: record.id in st.session_state["pending_delete"],
         }
         rows.append(row)
@@ -143,6 +164,7 @@ def render(ref: Reference, client: OllamaClient) -> None:
                 texts.FIX_NAME,
                 texts.FIX_STATE,
                 texts.FIX_ISSUES,
+                texts.FIX_INFORMATION,
             ],
             on_change=_on_editor_change,
             args=(ref, editor_key, visible_ids),
@@ -165,9 +187,23 @@ def render(ref: Reference, client: OllamaClient) -> None:
         with st.expander(texts.FIX_DETAILS):
             for record_id in visible_ids:
                 for issue in result.by_record.get(record_id, []):
-                    st.write(f"{record_id} · {texts.FIELD_OPTIONS[issue.field]} · {issue.message}")
+                    if issue.severity != Severity.INFO:
+                        st.write(
+                            f"{record_id} · {texts.FIELD_OPTIONS[issue.field]} · {issue.message}"
+                        )
     else:
         st.success(texts.FIX_NO_ERRORS)
+
+    information = [issue for issue in result.issues if issue.severity == Severity.INFO]
+    if information:
+        with st.expander(texts.FIX_INFORMATION_TITLE):
+            for code in dict.fromkeys(issue.code for issue in information):
+                matching = [issue for issue in information if issue.code == code]
+                st.info(
+                    texts.FIX_INFORMATION_SUMMARY.format(
+                        count=len(matching), message=matching[0].message
+                    )
+                )
 
     columns = st.columns(2)
     if columns[0].button(texts.FIX_DELETE_BUTTON, disabled=not st.session_state["pending_delete"]):

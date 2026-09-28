@@ -7,6 +7,7 @@ from core.models import (
     Issue,
     ReadMethod,
     Record,
+    Severity,
     SourceFile,
     Suggestion,
     ValidationResult,
@@ -89,7 +90,7 @@ def validate_all(
                     "POLO_SUGESTAO",
                 )
             )
-        if phone_suggestion:
+        if phone_suggestion and not normalized.ddd_conflict:
             suggestions.append(
                 Suggestion(
                     record.id,
@@ -118,10 +119,12 @@ def validate_all(
         by_record[issue.record_id].append(issue)
 
     with_error = sum(
-        any(issue.severity == "ERRO" for issue in row_issues) for row_issues in by_record.values()
+        any(issue.severity == Severity.ERRO for issue in row_issues)
+        for row_issues in by_record.values()
     )
     only_warning = sum(
-        bool(row_issues) and all(issue.severity == "AVISO" for issue in row_issues)
+        any(issue.severity == Severity.AVISO for issue in row_issues)
+        and not any(issue.severity == Severity.ERRO for issue in row_issues)
         for row_issues in by_record.values()
     )
     total = len(effective)

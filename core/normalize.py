@@ -29,7 +29,8 @@ def normalize(inp: dict[str, str]) -> Normalized:
     )
     ddd_from_phone: str | None = None
     ddd_conflict = False
-    if len(phone) == 11 and not phone_prefixed:
+    explicit_ddd = re.match(r"^\([0-9]{2}\)", values["telefone"]) is not None
+    if (len(phone) == 11 or (len(phone) == 10 and explicit_ddd)) and not phone_prefixed:
         ddd_from_phone = phone[:2]
         phone = phone[2:]
         if not values["ddd"]:

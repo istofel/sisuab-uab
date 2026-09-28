@@ -27,6 +27,7 @@ class ReadMethod(StrEnum):
 class Severity(StrEnum):
     ERRO = "ERRO"
     AVISO = "AVISO"
+    INFO = "INFO"
 
 
 class NoticeLevel(StrEnum):

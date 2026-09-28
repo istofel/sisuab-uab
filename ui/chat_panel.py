@@ -6,6 +6,7 @@ from core.errors import LLMResponseError, LLMUnavailableError
 from core.llm.chat import ChatTurn, ask
 from core.llm.client import OllamaClient
 from core.models import PatchOrigin
+from core.normalize import normalize
 from core.reference import Reference
 from ui import state, texts
 
@@ -23,10 +24,19 @@ def _apply_selected(indices: list[int], ref: Reference) -> int:
         record = by_id.get(proposal.record_id)
         if not proposal.valid or record is None or record.deleted:
             continue
+        preserved = False
+        if proposal.field in {"ddd", "telefone"}:
+            normalized = normalize(record.input)
+            if normalized.ddd_from_phone and not normalized.ddd_conflict:
+                for field in ("ddd", "telefone"):
+                    patch = st.session_state["patchlog"].set_value(
+                        record, field, normalized.values[field], PatchOrigin.CHAT, group
+                    )
+                    preserved = preserved or patch is not None
         patch = st.session_state["patchlog"].set_value(
             record, proposal.field, proposal.new, PatchOrigin.CHAT, group
         )
-        applied += patch is not None
+        applied += patch is not None or preserved
     st.session_state["chat_proposals"] = []
     if applied:
         state.bump_revision(ref)

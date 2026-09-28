@@ -15,7 +15,7 @@ from core.llm.client import OllamaClient
 from core.llm.prompts import CHAT_SYSTEM
 from core.llm.schemas import ChatOut
 from core.messages import chat_msg
-from core.models import Normalized, Record, ValidationResult
+from core.models import Normalized, Record, Severity, ValidationResult
 from core.normalize import normalize
 from core.reference import Reference
 from core.text_utils import search_key
@@ -93,7 +93,11 @@ def build_context(
     if focused:
         selected = focused
     elif len(active) > CHAT_MAX_RECORDS_IN_CONTEXT and only_problem_first:
-        selected = [record for record in active if result.by_record.get(record.id)]
+        selected = [
+            record
+            for record in active
+            if any(issue.severity != Severity.INFO for issue in result.by_record.get(record.id, []))
+        ]
     else:
         selected = active
     truncated = len(selected) > CHAT_MAX_RECORDS_IN_CONTEXT or (
@@ -218,7 +222,11 @@ def _local_request(
     if EXPLANATION_RE.search(normalized_message) and "erro" in normalized_message:
         if record is None:
             return chat_msg("REGISTRO_INEXISTENTE", registro=str(record_id)), []
-        issues = result.by_record.get(record_id, [])
+        issues = [
+            issue
+            for issue in result.by_record.get(record_id, [])
+            if issue.severity != Severity.INFO
+        ]
         if not issues:
             return chat_msg("SEM_ERROS_REGISTRO", registro=str(record_id)), []
         details = " ".join(issue.message for issue in issues)

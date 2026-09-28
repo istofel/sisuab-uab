@@ -78,6 +78,12 @@ python -m streamlit run app.py
 3. **Corrigir:** revise os erros e avisos, edite os valores na tabela ou aceite sugestões. Cada erro corrigido desaparece da lista após a revalidação. Alterações propostas no chat só são aplicadas após clicar em **Aplicar selecionadas**. CPF duplicado, mesmo idêntico, deve ser resolvido manualmente; telefone de 8 dígitos precisa de correção, sem prefixo automático. Quando não houver erros nem alterações aguardando confirmação, clique em **Continuar para Baixar**. Avisos não bloqueiam o avanço.
 4. **Baixar:** clique em **Conferir arquivo gerado** e depois em **Baixar CSV**. Uma edição posterior exige nova conferência. O CSV tem sete campos, separados por `;`, sem cabeçalho, aspas ou BOM.
 
+Na etapa **Corrigir**, nomes como `POLO UAB PARAÍSO DO TOCANTINS` podem gerar uma sugestão do polo válido correspondente. Quando várias linhas apontam para o mesmo polo, clique em **Revisar troca em N registros**, confira as linhas e confirme **Sim, aplicar em todas**. A troca pode ser desfeita.
+
+Telefones como `(63) 99246-4402` aparecem separados em **DDD = 63** e **Telefone = 992464402**, também no CSV final. Se o DDD da coluna divergir do telefone, confira e corrija a divergência. **Situação** e **Público-alvo** vazios recebem `CUR` e `DS`; os preenchimentos aparecem em **Informações**, separados dos problemas.
+
+Para `(63) 8412-2672`, o DDD também é separado. O sistema sugere acrescentar o 9 ao celular: aceite a sugestão para obter **DDD = 63** e **Telefone = 984122672**. O 9 só é acrescentado após sua confirmação.
+
 As quatro etapas também aparecem na barra de navegação. A aplicação impede abrir uma etapa que ainda não atende às condições de avanço. Arquivos e correções ficam somente na memória: reiniciar a aplicação ou recriar o contêiner apaga a carga atual.
 
 ### Lista de polos

@@ -18,13 +18,26 @@ def suggest_polo(value: str, ref: Reference) -> str | None:
     if key in by_key:
         return by_key[key]
 
-    city_matches: set[str] = set()
+    words = " ".join(re.sub(r"[^a-z0-9]+", " ", key).split())
+    city_matches: dict[str, set[str]] = {}
     for polo in ref.polos:
         match = re.match(r"^(.*?)-([A-Z]{2})\b", polo)
-        if match and key in {search_key(match.group(1)), search_key(match.group(0))}:
-            city_matches.add(polo)
-    if len(city_matches) == 1:
-        return next(iter(city_matches))
+        if match:
+            city = search_key(match.group(1))
+            if f" {city} " in f" {words} ":
+                city_matches.setdefault(city, set()).add(polo)
+    # Um município pode conter o nome de outro: prefira a referência completa.
+    specific_cities = [
+        city
+        for city in city_matches
+        if not any(city != other and f" {city} " in f" {other} " for other in city_matches)
+    ]
+    if specific_cities:
+        if len(specific_cities) == 1:
+            polos = city_matches[specific_cities[0]]
+            if len(polos) == 1:
+                return next(iter(polos))
+        return None
 
     close = get_close_matches(key, by_key, n=1, cutoff=POLO_FUZZY_CUTOFF)
     return by_key[close[0]] if close else None

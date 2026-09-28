@@ -39,7 +39,7 @@ CATALOG: dict[str, tuple[Severity, str]] = {
         Severity.ERRO,
         'A situação "{valor}" não existe. Use CUR, CAN, TRC, DES, FDO, FAL, TRA, DTT ou TCC.',
     ),
-    "SITUACAO_PADRAO": (Severity.AVISO, "Situação não informada: preenchida como CUR (Cursando)."),
+    "SITUACAO_PADRAO": (Severity.INFO, "Situação não informada: preenchida como CUR (Cursando)."),
     "SITUACAO_CONTEXTO": (
         Severity.AVISO,
         "{orientacao} Período atual: {periodo}.",
@@ -66,7 +66,7 @@ CATALOG: dict[str, tuple[Severity, str]] = {
         'O público-alvo "{valor}" não existe. Use DS (Demanda Social) ou PR (Professor da Rede).',
     ),
     "PUBLICO_PADRAO": (
-        Severity.AVISO,
+        Severity.INFO,
         "Público-alvo não informado: preenchido como DS (Demanda Social).",
     ),
 }
