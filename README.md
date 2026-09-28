@@ -18,17 +18,28 @@ Escolha uma das opções abaixo: Python 3.11 ou superior para executar sem Docke
 ollama pull qwen3.5:9b
 ```
 
-### Sem Docker
+### Inicialização automática com Docker
 
-No Linux ou macOS:
+Instale o Docker com Compose. No Windows e macOS, instale também o Ollama e baixe o modelo conforme o comando acima. Depois:
+
+- **Windows:** dê dois cliques em `run.bat`.
+- **Linux/macOS:** execute:
 
 ```sh
 ./run.sh
 ```
 
-No Windows 10/11, execute `run.bat`. Os scripts criam `.venv`, instalam as dependências, copiam `.env.example` para `.env` na primeira execução e iniciam a aplicação em <http://127.0.0.1:8501>. Se necessário, edite `APP_PORT` em `.env` antes de iniciar. Inicie o Ollama separadamente para usar a IA; com ele desligado, as planilhas continuam funcionando.
+Os scripts copiam `.env.example` para `.env` na primeira execução, iniciam o Docker e o Ollama se estiverem parados, aguardam os serviços e executam `docker compose up -d --build app`. Não é necessário instalar Python nesse modo. A aplicação fica em <http://127.0.0.1:8501>; para mudar a porta, edite `APP_PORT` em `.env`.
 
-### Com Docker
+No Linux, `run.sh` inicia o Ollama no Compose. Na primeira utilização, baixe o modelo desse serviço:
+
+```sh
+docker compose --profile ollama exec ollama ollama pull qwen3.5:9b
+```
+
+Os scripts iniciam programas já instalados; não instalam o Docker Desktop ou o Ollama do host. No Linux, pode ser solicitada a senha de administrador para iniciar o serviço Docker. Rodar os scripts novamente pode recriar o contêiner da aplicação se houver atualizações, apagando a carga atual da memória.
+
+### Docker manual
 
 No Windows ou macOS, inicie o Ollama no host e execute:
 
@@ -46,6 +57,19 @@ docker compose --profile ollama exec ollama ollama pull qwen3.5:9b
 ```
 
 No Windows, substitua `cp` por `copy` se estiver no Prompt de Comando. A interface fica em <http://127.0.0.1:8501> em todos os casos. Confira os serviços com `docker compose ps`; encerre com `docker compose --profile ollama down`. O Compose publica somente a porta local da aplicação. O Ollama do profile não publica porta no host.
+
+### Sem Docker
+
+Com Python 3.11 ou superior e o Ollama iniciado, crie um ambiente e execute:
+
+```sh
+python -m venv .venv
+# Linux/macOS:
+source .venv/bin/activate
+# Windows (Prompt de Comando): .venv\Scripts\activate.bat
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
+```
 
 ## Como usar
 
