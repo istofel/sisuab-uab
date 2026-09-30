@@ -23,6 +23,7 @@ def normalize(inp: dict[str, str]) -> Normalized:
     values["publico_alvo"] = values["publico_alvo"].upper()
     values["ddd"] = ascii_digits(values["ddd"]).lstrip("0")
 
+    values["telefone"] = values["telefone"].split(",", maxsplit=1)[0].strip()
     phone = ascii_digits(values["telefone"])
     phone_prefixed = (len(phone) in {12, 13} and phone.startswith("55")) or (
         len(phone) in {11, 12} and phone.startswith("0")

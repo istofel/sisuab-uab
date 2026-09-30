@@ -80,7 +80,7 @@ python -m streamlit run app.py
 
 Na etapa **Corrigir**, nomes como `POLO UAB PARAÍSO DO TOCANTINS` podem gerar uma sugestão do polo válido correspondente. Quando várias linhas apontam para o mesmo polo, clique em **Revisar troca em N registros**, confira as linhas e confirme **Sim, aplicar em todas**. A troca pode ser desfeita.
 
-Telefones como `(63) 99246-4402` aparecem separados em **DDD = 63** e **Telefone = 992464402**, também no CSV final. Se o DDD da coluna divergir do telefone, confira e corrija a divergência. **Situação** e **Público-alvo** vazios recebem `CUR` e `DS`; os preenchimentos aparecem em **Informações**, separados dos problemas.
+Telefones como `(63) 99246-4402` aparecem separados em **DDD = 63** e **Telefone = 992464402**, também no CSV final. Se a célula contiver mais de um telefone separado por vírgula, o sistema usa automaticamente o primeiro. Se o DDD da coluna divergir do telefone, confira e corrija a divergência. **Situação** e **Público-alvo** vazios recebem `CUR` e `DS`; os preenchimentos aparecem em **Informações**, separados dos problemas.
 
 Para `(63) 8412-2672`, o DDD também é separado. O sistema sugere acrescentar o 9 ao celular: aceite a sugestão para obter **DDD = 63** e **Telefone = 984122672**. O 9 só é acrescentado após sua confirmação.
 
