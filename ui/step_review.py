@@ -118,16 +118,28 @@ def _review_file(source: SourceFile, ref: Reference, client: OllamaClient) -> No
             )
             if included:
                 selected.add(index)
+            width = max(
+                len(table.header or []),
+                max((len(row) for row in table.rows), default=0),
+            )
             if table.rows:
                 st.caption(texts.REVIEW_PREVIEW)
-                st.dataframe(table.rows[:5], hide_index=True)
+                preview_columns = [
+                    texts.REVIEW_MAPPING.format(
+                        index=column + 1,
+                        name=table.header[column] if table.header else str(column + 1),
+                    )
+                    for column in range(width)
+                ]
+                st.dataframe(
+                    [
+                        dict(zip(preview_columns, row, strict=False))
+                        for row in table.rows[:5]
+                    ],
+                    hide_index=True,
+                )
             proposal = source.mappings[index]
             mapping: dict[int, str] = {}
-            width = (
-                len(table.header)
-                if table.header is not None
-                else max((len(row) for row in table.rows), default=0)
-            )
             for column in range(width):
                 name = table.header[column] if table.header else str(column + 1)
                 options = list(texts.FIELD_OPTIONS)

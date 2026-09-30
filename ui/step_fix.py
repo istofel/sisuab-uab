@@ -1,5 +1,7 @@
 """Etapa 3: tabela editável, exclusão confirmada e desfazer."""
 
+from collections import Counter
+
 import pandas as pd
 import streamlit as st
 
@@ -13,6 +15,13 @@ from ui import chat_panel, state, suggestions_panel, texts
 
 FIELD_TO_LABEL = {field: texts.FIELD_OPTIONS[field] for field in FIELDS}
 LABEL_TO_FIELD = {label: field for field, label in FIELD_TO_LABEL.items()}
+
+
+def _summary(result):
+    errors = Counter(issue.field for issue in result.issues if issue.severity == Severity.ERRO)
+    warnings = Counter(issue.field for issue in result.issues if issue.severity == Severity.AVISO)
+    suggestions = Counter((item.field, item.proposed) for item in result.suggestions)
+    return errors, warnings, suggestions
 
 
 def _on_editor_change(ref: Reference, editor_key: str, visible_ids: list[int]) -> None:
@@ -133,6 +142,40 @@ def render(ref: Reference, client: OllamaClient) -> None:
         return
     result = state.get_result(ref)
     counts = result.counts
+    errors, warnings, suggestions = _summary(result)
+    with st.container(border=True):
+        st.subheader(texts.FIX_SUMMARY_TITLE)
+        summary_columns = st.columns(3)
+        summary_columns[0].metric(texts.FIX_SUMMARY_ERRORS, counts.with_error)
+        summary_columns[1].metric(texts.FIX_SUMMARY_WARNINGS, sum(warnings.values()))
+        summary_columns[2].metric(texts.FIX_SUMMARY_SUGGESTIONS, len(result.suggestions))
+        st.caption(
+            texts.FIX_SUMMARY_BY_FIELD.format(
+                details=" · ".join(
+                    f"{texts.FIELD_OPTIONS[field]}: {count}" for field, count in errors.items()
+                )
+                or texts.FIX_SUMMARY_NONE
+            )
+        )
+        st.caption(
+            texts.FIX_SUMMARY_WARNINGS_BY_FIELD.format(
+                details=" · ".join(
+                    f"{texts.FIELD_OPTIONS[field]}: {count}" for field, count in warnings.items()
+                )
+                or texts.FIX_SUMMARY_NONE
+            )
+        )
+        st.caption(
+            texts.FIX_SUMMARY_BY_SUGGESTION.format(
+                details=" · ".join(
+                    texts.FIX_SUMMARY_SUGGESTION_ITEM.format(
+                        field=texts.FIELD_OPTIONS[field], proposed=proposed, count=count
+                    )
+                    for (field, proposed), count in suggestions.items()
+                )
+                or texts.FIX_SUMMARY_NONE
+            )
+        )
     st.write(
         texts.FIX_COUNTS.format(
             total=counts.total,

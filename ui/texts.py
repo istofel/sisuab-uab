@@ -66,6 +66,15 @@ FIELD_OPTIONS = {
 }
 FIX_TITLE = "Corrigir registros"
 FIX_EMPTY = "Nenhum registro confirmado para corrigir."
+FIX_SUMMARY_TITLE = "Resumo das pendências e sugestões"
+FIX_SUMMARY_ERRORS = "Registros com erro"
+FIX_SUMMARY_WARNINGS = "Avisos"
+FIX_SUMMARY_SUGGESTIONS = "Correções sugeridas"
+FIX_SUMMARY_BY_FIELD = "Erros por campo: {details}"
+FIX_SUMMARY_WARNINGS_BY_FIELD = "Avisos por campo: {details}"
+FIX_SUMMARY_BY_SUGGESTION = "Sugestões por destino: {details}"
+FIX_SUMMARY_SUGGESTION_ITEM = "{field} → {proposed}: {count} registro(s)"
+FIX_SUMMARY_NONE = "Nenhum"
 FIX_COUNTS = (
     "{total} registros · {errors} com ERRO · {warnings} só com AVISO · "
     "{ok} sem problema · {discarded} descartadas"

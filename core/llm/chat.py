@@ -32,10 +32,20 @@ from core.validate.fields import (
 ROW_REFERENCE_RE = re.compile(r"\b(?:linha|registro)\s+([0-9]+)\b")
 CORRECTION_RE = re.compile(
     r"\b(?:corrija|corrigir|altere|alterar|troque|trocar|substitua|"
-    r"mude|mudar|atualize|atualizar|coloque|colocar|defina|definir)\b"
+    r"mude|mudar|atualize|atualizar|coloque|colocar|defina|definir|"
+    r"preencha|preencher|complete|completar|insira|inserir|informe|informar|"
+    r"ajuste|ajustar|retifique|retificar|atribua|atribuir)\b"
 )
 EXPLANATION_RE = re.compile(r"\b(?:explique|explicar|entender)\b")
 TARGET_RE = re.compile(r"\bpara\b\s*:?[ \t]*(.+)$", re.IGNORECASE | re.DOTALL)
+BATCH_SCOPE_RE = re.compile(
+    r"\b(?:coluna|campo)\b.*\b(?:erros?|problemas?|pendencias?|invalid[oa]s?|ausentes?|vazios?)\b"
+)
+BATCH_TARGET_RE = re.compile(
+    r"\b(?:para(?:\s+o\s+valor)?|com\s+(?:o\s+)?valor|pelo\s+valor)"
+    r"\s*:?[ \t]*(.+)$",
+    re.IGNORECASE | re.DOTALL,
+)
 FIELD_PATTERNS = {
     "polo": re.compile(r"\bpolo\b"),
     "cpf": re.compile(r"\bcpf\b"),
@@ -163,11 +173,67 @@ def _candidate_error(field: str, normalized: Normalized, ref: Reference | None) 
     return validate_publico(value)[0]
 
 
+def _target_value(value: str) -> str:
+    value = TARGET_LABEL_RE.sub("", value.strip(), count=1)
+    value = re.sub(
+        r"\s*(?:[,;]\s*)?(?:por favor|obrigad[oa])\s*[.!?]*$",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    )
+    return value.strip().strip("\"' ").strip(".!?; ")
+
+
 def _local_request(
     message: str, records: list[Record], result: ValidationResult, ref: Reference | None
 ) -> tuple[str, list[ProposedPatch]] | None:
     """Resolve pedidos inequívocos sem depender da interpretação do modelo."""
     normalized_message = search_key(message)
+    if CORRECTION_RE.search(normalized_message) and BATCH_SCOPE_RE.search(normalized_message):
+        fields = [
+            field for field, pattern in FIELD_PATTERNS.items() if pattern.search(normalized_message)
+        ]
+        target_match = BATCH_TARGET_RE.search(message)
+        if len(fields) == 1 and target_match is not None:
+            field = fields[0]
+            if field in {"polo", "ddd"} and ref is None:
+                return None
+            matching = [
+                record
+                for record in records
+                if not record.deleted
+                and any(
+                    issue.field == field and issue.severity == Severity.ERRO
+                    for issue in result.by_record.get(record.id, [])
+                )
+            ]
+            if not matching:
+                return chat_msg("SEM_ERROS_CAMPO", campo=FIELD_LABELS[field]), []
+            raw_value = _target_value(target_match.group(1))
+            if not raw_value:
+                return None
+            normalized = normalize({field: raw_value})
+            proposed = normalized.values[field]
+            if _candidate_error(field, normalized, ref) is not None:
+                return chat_msg("CAMPO_INVALIDO", campo=FIELD_LABELS[field]), []
+            patches = [
+                ProposedPatch(
+                    record.id,
+                    field,
+                    proposed,
+                    record.input.get(field, ""),
+                    True,
+                    None,
+                )
+                for record in matching
+            ]
+            return chat_msg(
+                "LOTE_CAMPO_PROPOSTO",
+                campo=FIELD_LABELS[field],
+                count=str(len(patches)),
+                valor=proposed,
+            ), patches
+
     row_matches = ROW_REFERENCE_RE.findall(normalized_message)
     if len(row_matches) > 1:
         return None
@@ -197,14 +263,7 @@ def _local_request(
             field = fields[0]
             if field in {"polo", "ddd"} and ref is None:
                 return None
-            raw_value = TARGET_LABEL_RE.sub("", target_match.group(1).strip(), count=1)
-            raw_value = re.sub(
-                r"\s*(?:[,;]\s*)?(?:por favor|obrigad[oa])\s*[.!?]*$",
-                "",
-                raw_value,
-                flags=re.IGNORECASE,
-            )
-            raw_value = raw_value.strip().strip("\"' ").strip(".!?; ")
+            raw_value = _target_value(target_match.group(1))
             if not raw_value:
                 return None
             if record is None:
@@ -268,6 +327,8 @@ def ask(
         f"<dados>\n{context}\n</dados>\nConversa:\n{turns}\nPedido: {message}"
     )
     output = client.chat_structured(model, CHAT_SYSTEM, user, ChatOut)
+    if not output.alteracoes and re.search(r"\bpropost\w*\b", search_key(output.resposta)):
+        return chat_msg("CHAT_SEM_PROPOSTA"), [], truncated
     by_id = {record.id: record for record in records}
     context_ids = {int(line.split("|", 1)[0]) for line in context.splitlines()}
     proposals: dict[tuple[int, str], ProposedPatch] = {}

@@ -22,5 +22,8 @@ CHAT_SYSTEM = (
     "se o novo valor é válido: proponha o texto explícito e deixe a validação para o sistema. "
     "Pedidos como 'CPF de Ana: 012.345.678-90. Pode ajustar?' também são alterações. Se o valor "
     "não estiver no pedido, explique na resposta e deixe alteracoes vazio. Explique erros "
-    "usando as mensagens e códigos dos dados e sem afirmar que a alteração já foi aplicada."
+    "usando as mensagens e códigos dos dados. Pedidos para corrigir um campo em todos os "
+    "registros com erro nesse campo devem gerar uma alteração por registro afetado. Só diga que "
+    "há uma proposta se alteracoes contiver as mudanças correspondentes; nunca diga que foram "
+    "aplicadas."
 )

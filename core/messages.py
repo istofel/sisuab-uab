@@ -127,9 +127,17 @@ VERIFY_CATALOG: dict[str, str] = {
 }
 
 CHAT_CATALOG: dict[str, str] = {
+    "CHAT_SEM_PROPOSTA": (
+        "Não consegui montar uma proposta para confirmação. Nenhum dado foi alterado. "
+        "Informe o campo, o valor desejado e quais registros quer corrigir."
+    ),
     "CAMPO_PROPOSTO": (
         "Proposta de correção de {campo} no registro {registro}. Confira o valor e clique em "
         "Aplicar selecionadas para confirmar."
+    ),
+    "LOTE_CAMPO_PROPOSTO": (
+        '{count} registro(s) com erro em {campo}. Proposta: preencher com "{valor}". '
+        "Confira e clique em Aplicar selecionadas para confirmar."
     ),
     "CAMPO_INVALIDO": (
         "O valor informado para {campo} é inválido e não pode ser aplicado. "
@@ -144,6 +152,7 @@ CHAT_CATALOG: dict[str, str] = {
     ),
     "ERROS_REGISTRO": "Registro {registro}: {detalhes}",
     "SEM_ERROS_REGISTRO": "Não há erro pendente no registro {registro}.",
+    "SEM_ERROS_CAMPO": "Não encontrei registro com erro no campo {campo}.",
 }
 
 
