@@ -34,7 +34,8 @@ CORRECTION_RE = re.compile(
     r"\b(?:corrija|corrigir|altere|alterar|troque|trocar|substitua|"
     r"mude|mudar|atualize|atualizar|coloque|colocar|defina|definir|"
     r"preencha|preencher|complete|completar|insira|inserir|informe|informar|"
-    r"ajuste|ajustar|retifique|retificar|atribua|atribuir)\b"
+    r"ajuste|ajustar|retifique|retificar|atribua|atribuir|inclua|incluir|"
+    r"ad(?:i)?cion(?:e|ar))\b"
 )
 EXPLANATION_RE = re.compile(r"\b(?:explique|explicar|entender)\b")
 TARGET_RE = re.compile(r"\bpara\b\s*:?[ \t]*(.+)$", re.IGNORECASE | re.DOTALL)
@@ -43,7 +44,7 @@ BATCH_SCOPE_RE = re.compile(
     r"|\b(?:onde|quando)\b.*\b(?:erros?|problemas?|pendencias?|invalid[oa]s?|ausentes?|vazios?)\b"
 )
 BATCH_TARGET_RE = re.compile(
-    r"\b(?:para(?:\s+o\s+valor)?|com\s+(?:o\s+)?valor|pelo\s+valor)"
+    r"\b(?:para(?:\s+o\s+valor)?|com\s+(?:o\s+)?valor|pelo\s+valor|(?:o\s+)?valor)"
     r"\s*:?[ \t]*(.+)$",
     re.IGNORECASE | re.DOTALL,
 )
