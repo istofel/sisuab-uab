@@ -46,40 +46,41 @@ def _apply_selected(indices: list[int], ref: Reference) -> int:
 def render(ref: Reference, client: OllamaClient) -> None:
     """Mostra conversa e alterações propostas sem aplicar nada automaticamente."""
     st.subheader(texts.CHAT_TITLE)
-    for turn in st.session_state["chat_history"]:
-        with st.chat_message(turn.role):
-            st.write(turn.content)
+    with st.container(height=420, key="chat_conversation", autoscroll=True):
+        for turn in st.session_state["chat_history"]:
+            with st.chat_message(turn.role):
+                st.write(turn.content)
 
-    proposals = st.session_state["chat_proposals"]
-    if proposals:
-        st.warning(texts.CHAT_WARNING)
-        if st.session_state.get("chat_context_truncated"):
-            st.caption(texts.CHAT_CONTEXT_TRUNCATED)
-        selected: list[int] = []
-        for index, proposal in enumerate(proposals):
-            label = texts.CHAT_PROPOSAL.format(
-                record=proposal.record_id,
-                field=texts.FIELD_OPTIONS[proposal.field],
-                current=proposal.current,
-                new=proposal.new,
-            )
-            if proposal.valid:
-                if st.checkbox(label, value=True, key=f"chat_proposal_{index}"):
-                    selected.append(index)
-            else:
-                st.caption(label)
-                st.caption(
-                    texts.CHAT_INVALID.format(
-                        reason=texts.CHAT_REASONS.get(proposal.reason, proposal.reason),
-                    )
+        proposals = st.session_state["chat_proposals"]
+        if proposals:
+            st.warning(texts.CHAT_WARNING)
+            if st.session_state.get("chat_context_truncated"):
+                st.caption(texts.CHAT_CONTEXT_TRUNCATED)
+            selected: list[int] = []
+            for index, proposal in enumerate(proposals):
+                label = texts.CHAT_PROPOSAL.format(
+                    record=proposal.record_id,
+                    field=texts.FIELD_OPTIONS[proposal.field],
+                    current=proposal.current,
+                    new=proposal.new,
                 )
-        columns = st.columns(2)
-        if columns[0].button(texts.CHAT_APPLY, disabled=not selected):
-            _apply_selected(selected, ref)
-            st.rerun()
-        if columns[1].button(texts.CHAT_REJECT):
-            st.session_state["chat_proposals"] = []
-            st.rerun()
+                if proposal.valid:
+                    if st.checkbox(label, value=True, key=f"chat_proposal_{index}"):
+                        selected.append(index)
+                else:
+                    st.caption(label)
+                    st.caption(
+                        texts.CHAT_INVALID.format(
+                            reason=texts.CHAT_REASONS.get(proposal.reason, proposal.reason),
+                        )
+                    )
+            columns = st.columns(2)
+            if columns[0].button(texts.CHAT_APPLY, disabled=not selected):
+                _apply_selected(selected, ref)
+                st.rerun()
+            if columns[1].button(texts.CHAT_REJECT):
+                st.session_state["chat_proposals"] = []
+                st.rerun()
 
     status = st.session_state["llm_status"]
     available = status is not None and status.online and st.session_state["model"] is not None

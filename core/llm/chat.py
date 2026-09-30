@@ -39,7 +39,8 @@ CORRECTION_RE = re.compile(
 EXPLANATION_RE = re.compile(r"\b(?:explique|explicar|entender)\b")
 TARGET_RE = re.compile(r"\bpara\b\s*:?[ \t]*(.+)$", re.IGNORECASE | re.DOTALL)
 BATCH_SCOPE_RE = re.compile(
-    r"\b(?:coluna|campo)\b.*\b(?:erros?|problemas?|pendencias?|invalid[oa]s?|ausentes?|vazios?)\b"
+    r"\b(?:coluna|campo|linha)\b.*\b(?:erros?|problemas?|pendencias?|invalid[oa]s?|ausentes?|vazios?)\b"
+    r"|\b(?:onde|quando)\b.*\b(?:erros?|problemas?|pendencias?|invalid[oa]s?|ausentes?|vazios?)\b"
 )
 BATCH_TARGET_RE = re.compile(
     r"\b(?:para(?:\s+o\s+valor)?|com\s+(?:o\s+)?valor|pelo\s+valor)"
@@ -175,6 +176,7 @@ def _candidate_error(field: str, normalized: Normalized, ref: Reference | None) 
 
 def _target_value(value: str) -> str:
     value = TARGET_LABEL_RE.sub("", value.strip(), count=1)
+    value = re.sub(r"^(?:o\s+)?valor\s*:?[ \t]*", "", value, flags=re.IGNORECASE)
     value = re.sub(
         r"\s*(?:[,;]\s*)?(?:por favor|obrigad[oa])\s*[.!?]*$",
         "",
@@ -189,7 +191,11 @@ def _local_request(
 ) -> tuple[str, list[ProposedPatch]] | None:
     """Resolve pedidos inequívocos sem depender da interpretação do modelo."""
     normalized_message = search_key(message)
-    if CORRECTION_RE.search(normalized_message) and BATCH_SCOPE_RE.search(normalized_message):
+    if (
+        CORRECTION_RE.search(normalized_message)
+        and not ROW_REFERENCE_RE.search(normalized_message)
+        and BATCH_SCOPE_RE.search(normalized_message)
+    ):
         fields = [
             field for field, pattern in FIELD_PATTERNS.items() if pattern.search(normalized_message)
         ]
