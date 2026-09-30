@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "qwen3.5:9b"
+    ollama_model: str = "qwen3.5:2b"
     ollama_timeout_s: int = Field(120, ge=10, le=900)
     app_port: int = Field(8501, ge=1024, le=65535)
     csv_line_ending: Literal["LF", "CRLF"] = "LF"

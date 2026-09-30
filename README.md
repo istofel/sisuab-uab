@@ -12,10 +12,10 @@ Baixe o projeto com `git clone https://github.com/istofel/sisuab-uab.git` e entr
 
 ## Instalação
 
-Escolha uma das opções abaixo: Python 3.11 ou superior para executar sem Docker, ou Docker com Compose. A meta para a aplicação é usar até 1 GB de RAM; para usar a IA local, estime 8 a 16 GB de RAM na máquina e espaço adicional para o modelo. Se usar o Ollama instalado no computador, [instale-o](https://ollama.com/download) e baixe `qwen3.5:9b` (cerca de 6,6 GB):
+Escolha uma das opções abaixo: Python 3.11 ou superior para executar sem Docker, ou Docker com Compose. Para usar a IA local, instale o Ollama e reserve cerca de 2,7 GB para o modelo padrão `qwen3.5:2b`. Se usar o Ollama instalado no computador, [instale-o](https://ollama.com/download) e baixe o modelo:
 
 ```sh
-ollama pull qwen3.5:9b
+ollama pull qwen3.5:2b
 ```
 
 ### Inicialização automática com Docker
@@ -34,7 +34,7 @@ Os scripts copiam `.env.example` para `.env` na primeira execução, iniciam o D
 No Linux, `run.sh` inicia o Ollama no Compose. Na primeira utilização, baixe o modelo desse serviço:
 
 ```sh
-docker compose --profile ollama exec ollama ollama pull qwen3.5:9b
+docker compose --profile ollama exec ollama ollama pull qwen3.5:2b
 ```
 
 Os scripts iniciam programas já instalados; não instalam o Docker Desktop ou o Ollama do host. No Linux, pode ser solicitada a senha de administrador para iniciar o serviço Docker. Rodar os scripts novamente pode recriar o contêiner da aplicação se houver atualizações, apagando a carga atual da memória.
@@ -53,7 +53,7 @@ O contêiner acessa o Ollama do host por `host.docker.internal`. No Linux, use o
 cp .env.example .env
 # Edite OLLAMA_DOCKER_URL=http://ollama:11434 em .env
 docker compose --profile ollama up -d --build
-docker compose --profile ollama exec ollama ollama pull qwen3.5:9b
+docker compose --profile ollama exec ollama ollama pull qwen3.5:2b
 ```
 
 No Windows, substitua `cp` por `copy` se estiver no Prompt de Comando. A interface fica em <http://127.0.0.1:8501> em todos os casos. Confira os serviços com `docker compose ps`; encerre com `docker compose --profile ollama down`. O Compose publica somente a porta local da aplicação. O Ollama do profile não publica porta no host.
