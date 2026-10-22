@@ -1,6 +1,7 @@
 """Extração local de tabelas e texto livre de PDF e DOCX."""
 
 import io
+from textwrap import wrap
 
 import pdfplumber
 from docx import Document
@@ -17,6 +18,28 @@ def _chunk_lines(lines: list[str], prefix: str) -> list[TextBlock]:
     current: list[str] = []
     start = 1
     for number, line in enumerate(lines, start=1):
+        if len(line) > LLM_MAX_BLOCK_CHARS:
+            if current:
+                text = nfc("\n".join(current))
+                blocks.append(
+                    TextBlock(
+                        f"{prefix} {start}–{number - 1}", text, looks_like_student_data([text])
+                    )
+                )
+            for part in wrap(
+                nfc(line),
+                width=LLM_MAX_BLOCK_CHARS,
+                expand_tabs=False,
+                replace_whitespace=False,
+                drop_whitespace=False,
+                break_on_hyphens=False,
+            ):
+                blocks.append(
+                    TextBlock(f"{prefix} {number}–{number}", part, looks_like_student_data([part]))
+                )
+            current = []
+            start = number + 1
+            continue
         if current and sum(len(item) + 1 for item in current) + len(line) > LLM_MAX_BLOCK_CHARS:
             text = nfc("\n".join(current))
             blocks.append(
@@ -61,9 +84,7 @@ def read_pdf(data: bytes) -> tuple[list[RawTable], list[TextBlock]]:
                     outside = outside.outside_bbox(found.bbox)
                 text = nfc((outside.extract_text() or "").strip())
                 if text:
-                    blocks.append(
-                        TextBlock(f"página {page_number}", text, looks_like_student_data([text]))
-                    )
+                    blocks.extend(split_text_blocks(text, f"página {page_number}, linhas"))
     except Exception as exc:
         raise FileReadError("ARQ_ILEGIVEL") from exc
     return tables, blocks

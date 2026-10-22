@@ -53,10 +53,12 @@ def init() -> None:
 def reset() -> None:
     """Descarta a carga e mantém a escolha e o status da IA local."""
     model = st.session_state.get("model")
+    models = st.session_state.get("models", [])
     llm_status = st.session_state.get("llm_status")
     for key, value in _defaults().items():
         st.session_state[key] = value
     st.session_state["model"] = model
+    st.session_state["models"] = models
     st.session_state["llm_status"] = llm_status
 
 

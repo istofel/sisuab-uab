@@ -2,9 +2,11 @@
 
 import streamlit as st
 
+from core.constants import MAX_RECORDS_PER_SESSION
 from core.llm.client import OllamaClient
 from core.llm.extract import extract_blocks
-from core.mapping import validate_mapping
+from core.mapping import rows_to_inputs, validate_mapping
+from core.messages import file_msg
 from core.models import FileState, SourceFile
 from core.pipeline import build_records, rebuild_file
 from core.reference import Reference
@@ -18,6 +20,14 @@ def _apply_review(
     mappings: dict[int, dict[int, str]],
     polo_default: str | None,
 ) -> None:
+    incoming = len(source.ai_records) + sum(
+        len(rows_to_inputs(source.tables[index], mappings[index], polo_default))
+        for index in selected
+    )
+    other_records = sum(record.source_id != source.id for record in st.session_state["records"])
+    if other_records + incoming > MAX_RECORDS_PER_SESSION:
+        st.error(file_msg("ARQ_LIMITE_REGISTROS", nome=source.name)[1])
+        return
     old_ids = {record.id for record in st.session_state["records"] if record.source_id == source.id}
     source.selected_tables = selected
     source.polo_default = polo_default
@@ -122,26 +132,29 @@ def _review_file(source: SourceFile, ref: Reference, client: OllamaClient) -> No
                 len(table.header or []),
                 max((len(row) for row in table.rows), default=0),
             )
+            column_names = [
+                table.header[column]
+                if table.header and column < len(table.header)
+                else str(column + 1)
+                for column in range(width)
+            ]
             if table.rows:
                 st.caption(texts.REVIEW_PREVIEW)
                 preview_columns = [
                     texts.REVIEW_MAPPING.format(
                         index=column + 1,
-                        name=table.header[column] if table.header else str(column + 1),
+                        name=column_names[column],
                     )
                     for column in range(width)
                 ]
                 st.dataframe(
-                    [
-                        dict(zip(preview_columns, row, strict=False))
-                        for row in table.rows[:5]
-                    ],
+                    [dict(zip(preview_columns, row, strict=False)) for row in table.rows[:5]],
                     hide_index=True,
                 )
             proposal = source.mappings[index]
             mapping: dict[int, str] = {}
             for column in range(width):
-                name = table.header[column] if table.header else str(column + 1)
+                name = column_names[column]
                 options = list(texts.FIELD_OPTIONS)
                 current = proposal.mapping.get(column, "ignorar")
                 mapping[column] = st.selectbox(
