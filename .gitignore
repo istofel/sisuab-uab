@@ -1,0 +1,22 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+logs/
+uploads/
+saidas/
+docs/*
+!docs/banner/
+tests/
+tools/
+.github/
+AGENTS.md
+CLAUDE.md
+Como usar.md
+pyproject.toml
+requirements-dev.txt
