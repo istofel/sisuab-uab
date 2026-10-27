@@ -41,6 +41,7 @@ def verify_csv(data: bytes, ref: Reference, line_ending: str) -> VerifyReport:
         lines.pop()
 
     seen_cpfs: set[str] = set()
+    seen_emails: dict[str, str] = {}
     for number, line in enumerate(lines, start=1):
         if line == "":
             fail(number, "V04")
@@ -70,6 +71,11 @@ def verify_csv(data: bytes, ref: Reference, line_ending: str) -> VerifyReport:
         if cpf in seen_cpfs:
             fail(number, "V11")
         seen_cpfs.add(cpf)
+        email_key = email.strip().casefold()
+        if email_key:
+            if email_key in seen_emails and seen_emails[email_key] != cpf:
+                fail(number, "V13")
+            seen_emails[email_key] = cpf
         if situacao != situacao.upper() or situacao not in SITUACOES:
             fail(number, "V12")
     return VerifyReport(not failures, failures, len(lines))

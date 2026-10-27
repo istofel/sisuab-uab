@@ -92,6 +92,12 @@ Edite [config/polos.txt](config/polos.txt) para usar os nomes **exatamente** com
 
 ### Riscos do manual SisUAB
 
+Antes de liberar o CSV, a aplicação bloqueia e-mails repetidos entre CPFs diferentes, inclusive entre arquivos e sem diferenciar maiúsculas de minúsculas. Celulares devem ter nove dígitos e começar com `9`. Após corrigir os dados, os erros desaparecem na revalidação. A conferência final do CSV também verifica essas regras.
+
+A aplicação não consulta o cadastro da CAPES. E-mail principal ausente, e-mail já associado a outro cadastro e vínculos em outros cursos precisam ser conferidos na CAPES; essas situações não podem ser antecipadas apenas com o CSV local.
+
+Antes de gerar o arquivo, a etapa **Baixar** lista esses conflitos e exige a confirmação **Conferi os cadastros na CAPES e resolvi as pendências desta carga**. Essa confirmação é manual e não substitui uma consulta à CAPES. Qualquer alteração na carga exige confirmar novamente antes de gerar e baixar o CSV.
+
 - **R4:** o manual da CAPES diverge sobre CPF já existente na oferta: uma seção diz que o registro é alterado, outra que é ignorado. Confirme o comportamento em uma importação piloto antes de uma carga real.
 - **R5:** na inclusão, o SisUAB pode gravar o aluno como **CURSANDO** e sobrescrever outra situação. Confira a situação no SisUAB após importar.
 

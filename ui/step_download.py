@@ -16,7 +16,7 @@ from ui import state, texts
 def _verify_current(ref: Reference, settings: Settings) -> None:
     """Gera e relê os bytes da revisão atual antes de liberar o download."""
     result = state.get_result(ref)
-    if result.counts.with_error:
+    if result.counts.with_error or not st.session_state.get("capes_confirmed", False):
         return
     try:
         rows = effective_rows(st.session_state["records"], result)
@@ -41,12 +41,14 @@ def render(ref: Reference, settings: Settings) -> None:
     if result.counts.total == 0:
         st.info(texts.DOWNLOAD_EMPTY)
         return
+    st.warning(texts.DOWNLOAD_CAPES_NOTICE)
+    st.checkbox(texts.DOWNLOAD_CAPES_CONFIRM, key="capes_confirmed")
     if result.counts.with_error:
         st.error(texts.DOWNLOAD_BLOCKED.format(errors=result.counts.with_error))
     else:
         if result.counts.only_warning:
             st.warning(texts.DOWNLOAD_WARNINGS.format(count=result.counts.only_warning))
-        if st.button(texts.DOWNLOAD_VERIFY):
+        if st.button(texts.DOWNLOAD_VERIFY, disabled=not st.session_state["capes_confirmed"]):
             _verify_current(ref, settings)
 
     report = st.session_state["verify_report"]

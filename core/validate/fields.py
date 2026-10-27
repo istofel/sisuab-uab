@@ -80,6 +80,8 @@ def validate_telefone(value: str, prefixed: bool) -> tuple[str | None, str | Non
         return "TEL_8_DIGITOS", proposal
     if len(value) != TELEFONE_LEN or not is_ascii_digits(value):
         return "TEL_TAMANHO", None
+    if not value.startswith("9"):
+        return "TEL_INICIO_INVALIDO", None
     return None, None
 
 

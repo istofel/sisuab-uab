@@ -143,6 +143,16 @@ CHAT_REASONS = {
     "VALOR_INVALIDO": "o valor não passou na validação do campo",
 }
 DOWNLOAD_TITLE = "Conferir e baixar CSV"
+DOWNLOAD_CAPES_NOTICE = (
+    "Antes de gerar o CSV, confira na CAPES e regularize as pendências dos alunos:\n\n"
+    "- Vínculo existente em outro curso, instituição ou polo.\n"
+    "- E-mail já associado a outro cadastro na CAPES.\n"
+    "- E-mail duplicado para a mesma finalidade.\n"
+    "- Ausência de e-mail definido como principal.\n\n"
+    "O aplicativo verifica apenas os dados locais e não consulta o cadastro da CAPES. "
+    "Esses conflitos podem impedir a importação mesmo com um CSV válido."
+)
+DOWNLOAD_CAPES_CONFIRM = "Conferi os cadastros na CAPES e resolvi as pendências desta carga."
 DOWNLOAD_EMPTY = "Nenhum registro confirmado para exportar."
 DOWNLOAD_BLOCKED = "Corrija os {errors} registro(s) com erro para liberar o download."
 DOWNLOAD_VERIFY = "Conferir arquivo gerado"

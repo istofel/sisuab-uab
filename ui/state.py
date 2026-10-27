@@ -29,6 +29,7 @@ def _defaults() -> dict:
         "verify_report": None,
         "export_error": False,
         "verified_revision": None,
+        "capes_confirmed": False,
         "llm_status": None,
         "models": [],
         "model": None,
@@ -77,6 +78,7 @@ def bump_revision(ref: Reference) -> None:
     st.session_state["verify_report"] = None
     st.session_state["export_error"] = False
     st.session_state["verified_revision"] = None
+    st.session_state["capes_confirmed"] = False
 
 
 def get_result(ref: Reference) -> ValidationResult:
@@ -99,6 +101,7 @@ def download_allowed(ref: Reference) -> bool:
     report = st.session_state["verify_report"]
     return (
         result.counts.with_error == 0
+        and st.session_state.get("capes_confirmed", False)
         and report is not None
         and report.ok
         and st.session_state["verified_revision"] == st.session_state["revision"]

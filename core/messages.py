@@ -52,6 +52,11 @@ CATALOG: dict[str, tuple[Severity, str]] = {
         "O e-mail tem aspas, apóstrofo ou ponto e vírgula, que o SisUAB não aceita.",
     ),
     "EMAIL_NAO_ASCII": (Severity.ERRO, "O e-mail tem acento ou caractere especial."),
+    "EMAIL_DUPLICADO": (
+        Severity.ERRO,
+        "Este e-mail também aparece para outro CPF em {outros}. "
+        "Confira com os alunos e informe o e-mail correto de cada um.",
+    ),
     "DDD_AUSENTE": (Severity.ERRO, "DDD não informado."),
     "DDD_INVALIDO": (Severity.ERRO, 'O DDD "{valor}" não existe no Brasil.'),
     "DDD_CONFLITO": (
@@ -61,6 +66,11 @@ CATALOG: dict[str, tuple[Severity, str]] = {
     "TEL_AUSENTE": (Severity.ERRO, "Telefone não informado."),
     "TEL_8_DIGITOS": (Severity.ERRO, "O telefone tem 8 dígitos; o SisUAB exige 9. {orientacao}"),
     "TEL_TAMANHO": (Severity.ERRO, 'O telefone "{valor}" não tem 9 dígitos.'),
+    "TEL_INICIO_INVALIDO": (
+        Severity.ERRO,
+        'O telefone "{valor}" tem 9 dígitos, mas não começa com 9. '
+        "Confira com o aluno e informe um celular válido; não altere os dígitos sem confirmação.",
+    ),
     "PUBLICO_INVALIDO": (
         Severity.ERRO,
         'O público-alvo "{valor}" não existe. Use DS (Demanda Social) ou PR (Professor da Rede).',
@@ -124,6 +134,7 @@ VERIFY_CATALOG: dict[str, str] = {
     "V10": "Um campo da linha não passa na validação final.",
     "V11": "Há CPF repetido no arquivo.",
     "V12": "A situação não está em maiúsculas ou é inválida.",
+    "V13": "O mesmo e-mail está associado a CPFs diferentes no arquivo.",
 }
 
 CHAT_CATALOG: dict[str, str] = {
